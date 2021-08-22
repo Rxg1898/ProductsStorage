@@ -16,6 +16,7 @@ func NewUploader(endpoint, ak, sk string) (store.Uploader, error) {
 		Endpoint: endpoint,
 		Ak:       ak,
 		Sk:       sk,
+		listener: NewListener(),
 	}
 	if err := uploader.validata(); err != nil {
 		return nil, err
@@ -28,6 +29,8 @@ type aliyun struct {
 	Endpoint string `validate:"required,url"`
 	Ak       string `validate:"required"`
 	Sk       string `validate:"required"`
+
+	listener oss.ProgressListener
 }
 
 func (a *aliyun) validata() error {
@@ -47,7 +50,7 @@ func (a *aliyun) UploadFile(bucketName, objectKey, filePath string) error {
 
 	// 第一个参数: 上传到oss里面的文件的key(路径), go.sum --->  2021/7/21/go.sum
 	// 第二个参数: 需要上传的文件的路径
-	err = bucket.PutObjectFromFile(filePath, filePath)
+	err = bucket.PutObjectFromFile(filePath, filePath, oss.Progress(a.listener)) 
 	if err != nil {
 		return err
 	}
